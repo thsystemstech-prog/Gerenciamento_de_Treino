@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciador de Treino | Protocolo V.L.A.E.G.</title>
+  <!-- Chart.js para Gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .brand-title h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: #0b1120;
+      padding: 0.3rem;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: var(--card-bg);
+      color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Container Principal */
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    .view-section {
+      display: none;
+      animation: fadeIn 0.25s ease forwards;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid da Semana */
+    .semana-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .dia-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      position: relative;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .dia-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    .dia-card.hoje {
+      border-color: #38bdf8;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    .dia-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .dia-nome {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .badge-hoje {
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .tipo-treino-tag {
+      display: inline-block;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      padding: 0.35rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .dia-obs {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      min-height: 2.2rem;
+      line-height: 1.4;
+    }
+
+    .dia-stats {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      background: #0f172a;
+      padding: 0.6rem 0.8rem;
+      border-radius: 10px;
+    }
+
+    .stat-pill {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .stat-pill strong {
+      color: var(--text-main);
+      display: block;
+      font-size: 0.95rem;
+    }
+
+    .dia-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.55rem 0.95rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0b1120;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #334155;
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: #475569;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #022c22;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+      color: #fff;
+    }
+
+    /* Modo Treino */
+    .treino-container {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 900px) {
+      .treino-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .exercicio-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .exercicio-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .exercicio-nome {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .exercicio-grupo {
+      font-size: 0.75rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .series-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .series-table th {
+      text-align: left;
+      padding: 0.5rem 0.4rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .series-table td {
+      padding: 0.6rem 0.4rem;
+      border-top: 1px solid #334155;
+    }
+
+    .input-mini {
+      width: 75px;
+      padding: 0.4rem 0.5rem;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .input-mini:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Floating / Sticky Timer */
+    .timer-card {
+      background: #111827;
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px var(--accent-glow);
+      position: sticky;
+      top: 5rem;
+      height: fit-content;
+    }
+
+    .timer-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .timer-circle-wrap {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 1.25rem;
+    }
+
+    .timer-circle-wrap svg {
+      transform: rotate(-90deg);
+    }
+
+    .timer-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.75rem;
+      font-weight: 800;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .timer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    /* Modal de Edição */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Dashboard & Gráficos */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .kpi-card span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .kpi-card strong {
+      display: block;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin-top: 0.35rem;
+    }
+
+    .chart-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-head {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-title">
+        <h1>Gerenciador de Treino</h1>
+        <span>Metodologia V.L.A.E.G. & A.N.T. 3 Camadas</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchView('semana')">
+        📅 Rotina Semanal
+      </button>
+      <button class="tab-btn" onclick="switchView('treino')">
+        💪 Modo Treino
+      </button>
+      <button class="tab-btn" onclick="switchView('evolucao')">
+        📈 Evolução & Gráficos
+      </button>
+    </nav>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main>
+    <!-- 1. ABA ROTINA SEMANAL -->
+    <section id="view-semana" class="view-section active">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <div>
+          <h2 style="font-size: 1.4rem; font-weight: 800;">Planejamento Semanal</h2>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Organize seus treinos, cargas e técnicas avançadas para cada dia.</p>
+        </div>
+        <button class="btn btn-secondary" onclick="resetarExemplo()" title="Recarregar rotina padrão">
+          🔄 Rotina Exemplo
+        </button>
+      </div>
+
+      <div class="semana-grid" id="semana-cards">
+        <!-- Preenchido dinamicamente via JS -->
+      </div>
+    </section>
+
+    <!-- 2. ABA MODO TREINO (AO VIVO) -->
+    <section id="view-treino" class="view-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h2 style="font-size: 1.4rem; font-weight: 800;" id="treino-dia-titulo">Treino do Dia</h2>
+          <p style="color: var(--text-muted); font-size: 0.85rem;" id="treino-tipo-desc">Selecione o dia e marque suas séries conforme treina.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <label style="font-size: 0.85rem; color: var(--text-muted);">Dia:</label>
+          <select id="select-dia-treino" class="form-control" style="width: 170px;" onchange="carregarTreinoDia(this.value)">
+            <option value="Segunda-feira">Segunda-feira</option>
+            <option value="Terça-feira">Terça-feira</option>
+            <option value="Quarta-feira">Quarta-feira</option>
+            <option value="Quinta-feira">Quinta-feira</option>
+            <option value="Sexta-feira">Sexta-feira</option>
+            <option value="Sábado">Sábado</option>
+            <option value="Domingo">Domingo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="treino-container">
+        <!-- Lista de Exercícios -->
+        <div id="exercicios-lista-treino">
+          <!-- Carregado via JS -->
+        </div>
+
+        <!-- Cronômetro Flutuante com Som -->
+        <div>
+          <div class="timer-card">
+            <div class="timer-title">⏱️ Intervalo de Descanso</div>
+            <div class="timer-circle-wrap">
+              <svg width="180" height="180">
+                <circle cx="90" cy="90" r="80" stroke="#1e293b" stroke-width="10" fill="none"></circle>
+                <circle id="timer-progress-ring" cx="90" cy="90" r="80" stroke="#38bdf8" stroke-width="10" fill="none"
+                        stroke-dasharray="502" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s linear;"></circle>
+              </svg>
+              <div class="timer-display" id="timer-seconds">00:00</div>
+            </div>
+            <div class="timer-sub" id="timer-status-text">Pronto para a próxima série</div>
+            <div class="timer-actions" style="margin-top: 1rem;">
+              <button class="btn btn-primary" onclick="iniciarTimer(60)">+60s</button>
+              <button class="btn btn-primary" onclick="iniciarTimer(90)">+90s</button>
+              <button class="btn btn-secondary" onclick="pausarOuRetomarTimer()">Pausar</button>
+              <button class="btn btn-secondary" onclick="pararTimer()">Zerar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. ABA EVOLUÇÃO & GRÁFICOS -->
+    <section id="view-evolucao" class="view-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h2 style="font-size: 1.4rem; font-weight: 800;">Evolução & Progressão de Carga</h2>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Acompanhe o ganho de força e volume por exercício ao longo do tempo.</p>
+        </div>
+        <div>
+          <select id="select-exercicio-evolucao" class="form-control" style="width: 250px;" onchange="carregarGraficosExercicio(this.value)">
+            <!-- Opções via JS -->
+          </select>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span>Recorde Pessoal (PR)</span>
+          <strong id="kpi-pr">0 kg</strong>
+        </div>
+        <div class="kpi-card">
+          <span>Volume Acumulado</span>
+          <strong id="kpi-volume">0 kg</strong>
+        </div>
+        <div class="kpi-card">
+          <span>Séries Concluídas</span>
+          <strong id="kpi-series">0</strong>
+        </div>
+        <div class="kpi-card">
+          <span>1RM Estimado (Epley)</span>
+          <strong id="kpi-1rm">0 kg</strong>
+        </div>
+      </div>
+
+      <!-- Gráfico 1: Carga Máxima -->
+      <div class="chart-container">
+        <div class="chart-head">📈 Progressão de Carga Máxima (kg)</div>
+        <canvas id="chart-carga" height="90"></canvas>
+      </div>
+
+      <!-- Gráfico 2: Volume Total -->
+      <div class="chart-container">
+        <div class="chart-head">📊 Volume Total Levantado por Sessão (kg)</div>
+        <canvas id="chart-volume" height="90"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal de Edição de Treino -->
+  <div class="modal-overlay" id="modal-editar">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-titulo">Configurar Treino</h3>
+        <button class="btn btn-secondary" onclick="fecharModal()">✕</button>
+      </div>
+      <input type="hidden" id="modal-dia-semana">
+
+      <div class="form-group">
+        <label>Tipo de Treino (Ex: Push, Pernas, Hipertrofia)</label>
+        <input type="text" id="modal-tipo-treino" class="form-control" placeholder="Ex: Peito, Ombros e Tríceps">
+      </div>
+
+      <div class="form-group">
+        <label>Observações / Foco do Dia</label>
+        <textarea id="modal-observacoes" class="form-control" rows="2" placeholder="Ex: Foco em cadência e supino pesado"></textarea>
+      </div>
+
+      <div style="margin: 1.25rem 0 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <h4 style="font-size: 1rem; font-weight: 700;">Exercícios & Séries</h4>
+        <button class="btn btn-secondary" type="button" onclick="adicionarExercicioModal()">+ Adicionar Exercício</button>
+      </div>
+
+      <div id="modal-exercicios-container">
+        <!-- Exercícios editáveis -->
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; border-top: 1px solid var(--card-border); padding-top: 1rem;">
+        <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarTreinoModal()">💾 Salvar Treino</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- GERADOR DE SOM DETERMINÍSTICO (Web Audio API) ---
+    function tocarBeepSonoro() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // 3 Beeps harmônicos ascendentes
+        const tocarNota = (freq, inicio, duracao) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + inicio);
+          gain.gain.setValueAtTime(0.15, audioCtx.currentTime + inicio);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + inicio + duracao);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + inicio);
+          osc.stop(audioCtx.currentTime + inicio + duracao);
+        };
+
+        tocarNota(587.33, 0.0, 0.15); // D5
+        tocarNota(739.99, 0.18, 0.15); // F#5
+        tocarNota(880.00, 0.36, 0.30); // A5
+      } catch (e) {
+        console.warn("AudioContext bloqueado ou indisponível:", e);
+      }
+    }
+
+    // --- GERENCIADOR DE CRONÔMETRO ---
+    let timerInterval = null;
+    let timerTotalSegundos = 60;
+    let timerSegundosRestantes = 0;
+    let timerPausado = false;
+    const raioCirculo = 80;
+    const circunferencia = 2 * Math.PI * raioCirculo; // ~502
+
+    function iniciarTimer(segundos) {
+      if (timerInterval) clearInterval(timerInterval);
+      timerTotalSegundos = segundos;
+      timerSegundosRestantes = segundos;
+      timerPausado = false;
+      atualizarTimerUI();
+      document.getElementById('timer-status-text').innerText = "Descansando... Respire fundo";
+
+      timerInterval = setInterval(() => {
+        if (!timerPausado) {
+          timerSegundosRestantes--;
+          atualizarTimerUI();
+
+          if (timerSegundosRestantes <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            document.getElementById('timer-status-text').innerText = "🔥 Hora da próxima série!";
+            tocarBeepSonoro();
+          }
+        }
+      }, 1000);
+    }
+
+    function atualizarTimerUI() {
+      const display = document.getElementById('timer-seconds');
+      const ring = document.getElementById('timer-progress-ring');
+      
+      const mins = Math.floor(timerSegundosRestantes / 60).toString().padStart(2, '0');
+      const secs = (timerSegundosRestantes % 60).toString().padStart(2, '0');
+      display.innerText = `${mins}:${secs}`;
+
+      const progress = timerTotalSegundos > 0 ? (timerSegundosRestantes / timerTotalSegundos) : 0;
+      const offset = circunferencia * (1 - progress);
+      ring.style.strokeDashoffset = offset;
+    }
+
+    function pausarOuRetomarTimer() {
+      if (!timerInterval) return;
+      timerPausado = !timerPausado;
+      document.getElementById('timer-status-text').innerText = timerPausado ? "⏸️ Descanso pausado" : "Descansando...";
+    }
+
+    function pararTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = null;
+      timerSegundosRestantes = 0;
+      atualizarTimerUI();
+      document.getElementById('timer-status-text').innerText = "Pronto para a próxima série";
+    }
+
+    // --- NAVEGAÇÃO DE ABAS ---
+    function switchView(viewName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+
+      if (viewName === 'semana') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('view-semana').classList.add('active');
+        carregarSemana();
+      } else if (viewName === 'treino') {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('view-treino').classList.add('active');
+        const select = document.getElementById('select-dia-treino');
+        carregarTreinoDia(select.value);
+      } else if (viewName === 'evolucao') {
+        document.querySelectorAll('.tab-btn')[2].classList.add('active');
+        document.getElementById('view-evolucao').classList.add('active');
+        carregarListaExerciciosEvolucao();
+      }
+    }
+
+    // Determina o dia atual da semana em português
+    function getDiaHojePt() {
+      const dias = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+      return dias[new Date().getDay()];
+    }
+
+    // --- CARREGAMENTO DA SEMANA ---
+    async function carregarSemana() {
+      try {
+        const res = await fetch('/api/semana');
+        const dias = await res.json();
+        const container = document.getElementById('semana-cards');
+        container.innerHTML = '';
+
+        const hoje = getDiaHojePt();
+
+        dias.forEach(d => {
+          const isHoje = d.dia_semana === hoje;
+          const card = document.createElement('div');
+          card.className = `dia-card ${isHoje ? 'hoje' : ''}`;
+          
+          card.innerHTML = `
+            <div>
+              <div class="dia-header">
+                <div class="dia-nome">${d.dia_semana}</div>
+                ${isHoje ? '<span class="badge-hoje">Hoje</span>' : ''}
+              </div>
+              <div class="tipo-treino-tag">${d.tipo_treino}</div>
+              <div class="dia-obs">${d.observacoes || 'Sem observações adicionais.'}</div>
+              <div class="dia-stats">
+                <div class="stat-pill">
+                  <strong>${d.total_exercicios}</strong> Exercícios
+                </div>
+                <div class="stat-pill">
+                  <strong>${d.total_series}</strong> Séries
+                </div>
+                <div class="stat-pill">
+                  <strong>~${d.tempo_estimado_min}m</strong> Duração
+                </div>
+              </div>
+            </div>
+            <div class="dia-actions">
+              <button class="btn btn-primary" style="flex:1;" onclick="irParaTreinoDia('${d.dia_semana}')">
+                💪 Treinar
+              </button>
+              <button class="btn btn-secondary" onclick="abrirModalEdicao('${d.dia_semana}')">
+                ⚙️ Configurar
+              </button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Erro ao carregar resumo semanal:", err);
+      }
+    }
+
+    function irParaTreinoDia(dia) {
+      document.getElementById('select-dia-treino').value = dia;
+      switchView('treino');
+    }
+
+    // --- MODO TREINO (EXECUÇÃO DE SÉRIES) ---
+    async function carregarTreinoDia(dia) {
+      try {
+        const res = await fetch(`/api/treino/${encodeURIComponent(dia)}`);
+        const treino = await res.json();
+        const container = document.getElementById('exercicios-lista-treino');
+        const titulo = document.getElementById('treino-dia-titulo');
+        const desc = document.getElementById('treino-tipo-desc');
+
+        titulo.innerText = `${treino.dia_semana} — ${treino.tipo_treino}`;
+        desc.innerText = treino.observacoes ? `Foco: ${treino.observacoes}` : 'Complete suas séries e acione o descanso.';
+
+        container.innerHTML = '';
+
+        if (!treino.exercicios || treino.exercicios.length === 0) {
+          container.innerHTML = `
+            <div style="background: var(--card-bg); padding: 2rem; border-radius: 12px; text-align: center; border: 1px dashed var(--card-border);">
+              <h3>🏖️ Dia de Descanso ou Sem Treino Cadastrado</h3>
+              <p style="color: var(--text-muted); margin: 0.5rem 0 1rem;">Nenhum exercício cadastrado para ${dia}.</p>
+              <button class="btn btn-primary" onclick="abrirModalEdicao('${dia}')">Configurar Treino para ${dia}</button>
+            </div>
+          `;
+          return;
+        }
+
+        treino.exercicios.forEach(ex => {
+          const exDiv = document.createElement('div');
+          exDiv.className = 'exercicio-box';
+
+          let rowsHtml = '';
+          ex.series.forEach(s => {
+            const concluido = s.concluido;
+            const carga = s.execucao_real ? s.execucao_real.carga_kg : s.carga_sugerida_kg;
+            const reps = s.execucao_real ? s.execucao_real.repeticoes : s.repeticoes_sugeridas;
+
+            rowsHtml += `
+              <tr id="serie-row-${ex.exercicio_id}-${s.numero_serie}">
+                <td><strong>Série ${s.numero_serie}</strong></td>
+                <td>
+                  <input type="number" step="0.5" min="0" class="input-mini" id="carga-${ex.exercicio_id}-${s.numero_serie}" value="${carga}"> kg
+                </td>
+                <td>
+                  <input type="number" step="1" min="1" class="input-mini" id="reps-${ex.exercicio_id}-${s.numero_serie}" value="${reps}"> reps
+                </td>
+                <td>
+                  <span style="font-size: 0.75rem; background: #0f172a; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--card-border);">
+                    ${s.tecnica_avancada}
+                  </span>
+                </td>
+                <td>⏱️ ${s.tempo_descanso_segundos}s</td>
+                <td style="text-align: right;">
+                  <button class="btn ${concluido ? 'btn-success' : 'btn-primary'}" 
+                          onclick="concluirSerie(${ex.exercicio_id}, ${s.numero_serie}, ${s.tempo_descanso_segundos}, '${s.tecnica_avancada}')">
+                    ${concluido ? '✓ Feito' : 'Check'}
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+
+          exDiv.innerHTML = `
+            <div class="exercicio-head">
+              <span class="exercicio-nome">${ex.nome}</span>
+              <span class="exercicio-grupo">${ex.grupo_muscular}</span>
+            </div>
+            <table class="series-table">
+              <thead>
+                <tr>
+                  <th>SÉRIE</th>
+                  <th>CARGA REAL</th>
+                  <th>REPETIÇÕES</th>
+                  <th>TÉCNICA</th>
+                  <th>DESCANSO</th>
+                  <th style="text-align: right;">AÇÃO</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          `;
+          container.appendChild(exDiv);
+        });
+      } catch (err) {
+        console.error("Erro ao carregar treino do dia:", err);
+      }
+    }
+
+    async function concluirSerie(exercicioId, numeroSerie, descansoSugerido, tecnicaAvancada) {
+      const cargaInput = document.getElementById(`carga-${exercicioId}-${numeroSerie}`);
+      const repsInput = document.getElementById(`reps-${exercicioId}-${numeroSerie}`);
+
+      const carga = parseFloat(cargaInput.value) || 0;
+      const reps = parseInt(repsInput.value) || 1;
+
+      try {
+        const res = await fetch('/api/serie/executar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            exercicio_id: exercicioId,
+            numero_serie: numeroSerie,
+            carga_kg: carga,
+            repeticoes: reps,
+            tecnica_avancada: tecnicaAvancada,
+            tempo_descanso_segundos: descansoSugerido
+          })
+        });
+
+        const data = await res.json();
+        if (data.status === 'sucesso') {
+          // Atualiza botão visualmente
+          const row = document.getElementById(`serie-row-${exercicioId}-${numeroSerie}`);
+          const btn = row.querySelector('button');
+          btn.className = 'btn btn-success';
+          btn.innerText = '✓ Feito';
+
+          // Dispara o Cronômetro Sonoro automaticamente com o descanso sugerido
+          iniciarTimer(descansoSugerido);
+        }
+      } catch (err) {
+        alert("Erro ao registrar série: " + err);
+      }
+    }
+
+    // --- EVOLUÇÃO E GRÁFICOS (CHART.JS) ---
+    let chartCargaInstance = null;
+    let chartVolumeInstance = null;
+
+    async function carregarListaExerciciosEvolucao() {
+      try {
+        const res = await fetch('/api/exercicios');
+        const lista = await res.json();
+        const select = document.getElementById('select-exercicio-evolucao');
+        select.innerHTML = '';
+
+        if (lista.length === 0) {
+          select.innerHTML = '<option value="">Nenhum exercício encontrado</option>';
+          return;
+        }
+
+        lista.forEach(e => {
+          const opt = document.createElement('option');
+          opt.value = e.id;
+          opt.innerText = `${e.nome} (${e.dia_semana})`;
+          select.appendChild(opt);
+        });
+
+        carregarGraficosExercicio(lista[0].id);
+      } catch (err) {
+        console.error("Erro ao listar exercícios:", err);
+      }
+    }
+
+    async function carregarGraficosExercicio(exercicioId) {
+      if (!exercicioId) return;
+      try {
+        const res = await fetch(`/api/metricas/exercicio/${exercicioId}`);
+        const data = await res.json();
+
+        // Atualizar KPIs
+        document.getElementById('kpi-pr').innerText = `${data.kpis.carga_max_historica_kg} kg`;
+        document.getElementById('kpi-volume').innerText = `${data.kpis.volume_total_acumulado_kg} kg`;
+        document.getElementById('kpi-series').innerText = data.kpis.total_series_concluidas;
+        document.getElementById('kpi-1rm').innerText = `${data.kpis.maior_1rm_estimado} kg`;
+
+        const labels = data.historico.map(h => h.data);
+        const cargas = data.historico.map(h => h.carga_max_kg);
+        const volumes = data.historico.map(h => h.volume_total_kg);
+
+        // Gráfico de Carga Máxima
+        if (chartCargaInstance) chartCargaInstance.destroy();
+        const ctxCarga = document.getElementById('chart-carga').getContext('2d');
+        chartCargaInstance = new Chart(ctxCarga, {
+          type: 'line',
+          data: {
+            labels: labels.length ? labels : ['Sem dados'],
+            datasets: [{
+              label: 'Carga Máxima (kg)',
+              data: cargas.length ? cargas : [0],
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.3,
+              pointBackgroundColor: '#38bdf8',
+              pointRadius: 5
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+              x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+            }
+          }
+        });
+
+        // Gráfico de Volume
+        if (chartVolumeInstance) chartVolumeInstance.destroy();
+        const ctxVol = document.getElementById('chart-volume').getContext('2d');
+        chartVolumeInstance = new Chart(ctxVol, {
+          type: 'bar',
+          data: {
+            labels: labels.length ? labels : ['Sem dados'],
+            datasets: [{
+              label: 'Volume Total (kg)',
+              data: volumes.length ? volumes : [0],
+              backgroundColor: '#10b981',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+              x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+            }
+          }
+        });
+
+      } catch (err) {
+        console.error("Erro ao carregar gráficos:", err);
+      }
+    }
+
+    // --- MODAL DE EDIÇÃO DE TREINO ---
+    let modalExerciciosState = [];
+
+    async function abrirModalEdicao(dia) {
+      document.getElementById('modal-dia-semana').value = dia;
+      document.getElementById('modal-titulo').innerText = `Configurar Treino: ${dia}`;
+
+      const res = await fetch(`/api/treino/${encodeURIComponent(dia)}`);
+      const treino = await res.json();
+
+      document.getElementById('modal-tipo-treino').value = treino.tipo_treino || '';
+      document.getElementById('modal-observacoes').value = treino.observacoes || '';
+
+      modalExerciciosState = (treino.exercicios || []).map(e => ({
+        nome: e.nome,
+        grupo_muscular: e.grupo_muscular,
+        series: (e.series || []).map(s => ({
+          carga_kg: s.carga_sugerida_kg,
+          repeticoes: s.repeticoes_sugeridas,
+          tecnica_avancada: s.tecnica_avancada,
+          tempo_descanso_segundos: s.tempo_descanso_segundos
+        }))
+      }));
+
+      renderizarExerciciosModal();
+      document.getElementById('modal-editar').classList.add('active');
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-editar').classList.remove('active');
+    }
+
+    function adicionarExercicioModal() {
+      modalExerciciosState.push({
+        nome: "Novo Exercício",
+        grupo_muscular: "Geral",
+        series: [
+          { carga_kg: 20.0, repeticoes: 10, tecnica_avancada: "Nenhuma", tempo_descanso_segundos: 60 },
+          { carga_kg: 20.0, repeticoes: 10, tecnica_avancada: "Nenhuma", tempo_descanso_segundos: 60 },
+          { carga_kg: 20.0, repeticoes: 10, tecnica_avancada: "Nenhuma", tempo_descanso_segundos: 60 }
+        ]
+      });
+      renderizarExerciciosModal();
+    }
+
+    function removerExercicioModal(idx) {
+      modalExerciciosState.splice(idx, 1);
+      renderizarExerciciosModal();
+    }
+
+    function adicionarSerieExercicioModal(exIdx) {
+      modalExerciciosState[exIdx].series.push({
+        carga_kg: 20.0,
+        repeticoes: 10,
+        tecnica_avancada: "Nenhuma",
+        tempo_descanso_segundos: 60
+      });
+      renderizarExerciciosModal();
+    }
+
+    function removerSerieExercicioModal(exIdx, sIdx) {
+      modalExerciciosState[exIdx].series.splice(sIdx, 1);
+      renderizarExerciciosModal();
+    }
+
+    function renderizarExerciciosModal() {
+      const container = document.getElementById('modal-exercicios-container');
+      container.innerHTML = '';
+
+      const tecnicas = [
+        "Nenhuma", "Drop-set", "Rest-pause", "Bi-set", "Tri-set", 
+        "Super-slow", "Pirâmide Crescente", "Pirâmide Decrescente", 
+        "Cluster Sets", "Pausa Isométrica"
+      ];
+
+      modalExerciciosState.forEach((ex, exIdx) => {
+        const card = document.createElement('div');
+        card.style.background = '#0f172a';
+        card.style.border = '1px solid var(--card-border)';
+        card.style.borderRadius = '10px';
+        card.style.padding = '1rem';
+        card.style.marginBottom = '0.75rem';
+
+        let seriesHtml = '';
+        ex.series.forEach((s, sIdx) => {
+          let opts = tecnicas.map(t => `<option value="${t}" ${s.tecnica_avancada === t ? 'selected' : ''}>${t}</option>`).join('');
+          seriesHtml += `
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.8rem; width: 50px;">S${sIdx + 1}</span>
+              <input type="number" step="0.5" class="form-control" style="width: 80px;" value="${s.carga_kg}" 
+                     placeholder="Carga (kg)" onchange="modalExerciciosState[${exIdx}].series[${sIdx}].carga_kg = parseFloat(this.value)||0">
+              <input type="number" step="1" class="form-control" style="width: 75px;" value="${s.repeticoes}" 
+                     placeholder="Reps" onchange="modalExerciciosState[${exIdx}].series[${sIdx}].repeticoes = parseInt(this.value)||1">
+              <select class="form-control" style="flex:1;" onchange="modalExerciciosState[${exIdx}].series[${sIdx}].tecnica_avancada = this.value">
+                ${opts}
+              </select>
+              <input type="number" step="5" class="form-control" style="width: 85px;" value="${s.tempo_descanso_segundos}" 
+                     placeholder="Descanso(s)" onchange="modalExerciciosState[${exIdx}].series[${sIdx}].tempo_descanso_segundos = parseInt(this.value)||0">
+              <button class="btn btn-secondary" style="padding: 0.4rem 0.6rem;" onclick="removerSerieExercicioModal(${exIdx}, ${sIdx})">✕</button>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <input type="text" class="form-control" style="flex:2;" value="${ex.nome}" placeholder="Nome do Exercício"
+                   onchange="modalExerciciosState[${exIdx}].nome = this.value">
+            <input type="text" class="form-control" style="flex:1;" value="${ex.grupo_muscular}" placeholder="Grupo Muscular"
+                   onchange="modalExerciciosState[${exIdx}].grupo_muscular = this.value">
+            <button class="btn btn-secondary" onclick="removerExercicioModal(${exIdx})">Excluir</button>
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.4rem; display: flex; gap: 0.5rem;">
+            <span style="width: 50px;">SÉRIE</span>
+            <span style="width: 80px;">CARGA (KG)</span>
+            <span style="width: 75px;">REPS</span>
+            <span style="flex:1;">TÉCNICA AVANÇADA</span>
+            <span style="width: 85px;">INTERVALO</span>
+            <span style="width: 30px;"></span>
+          </div>
+          ${seriesHtml}
+          <button class="btn btn-secondary" style="font-size: 0.75rem; margin-top: 0.4rem;" onclick="adicionarSerieExercicioModal(${exIdx})">+ Adicionar Série</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function salvarTreinoModal() {
+      const dia = document.getElementById('modal-dia-semana').value;
+      const tipo = document.getElementById('modal-tipo-treino').value.trim();
+      const obs = document.getElementById('modal-observacoes').value.trim();
+
+      const payload = {
+        dia_semana: dia,
+        tipo_treino: tipo || "Treino Personalizado",
+        observacoes: obs,
+        exercicios: modalExerciciosState
+      };
+
+      try {
+        const res = await fetch(`/api/treino/${encodeURIComponent(dia)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.status === 'sucesso') {
+          fecharModal();
+          carregarSemana();
+          const select = document.getElementById('select-dia-treino');
+          if (select.value === dia) {
+            carregarTreinoDia(dia);
+          }
+        } else {
+          alert("Erro: " + data.mensagem);
+        }
+      } catch (err) {
+        alert("Erro ao salvar: " + err);
+      }
+    }
+
+    async function resetarExemplo() {
+      if (confirm("Deseja restaurar a rotina semanal de exemplo padrão?")) {
+        await fetch('/api/seed/reset', { method: 'POST' });
+        carregarSemana();
+      }
+    }
+
+    // Inicialização ao carregar página
+    window.addEventListener('DOMContentLoaded', () => {
+      const hoje = getDiaHojePt();
+      document.getElementById('select-dia-treino').value = hoje;
+      carregarSemana();
+    });
+  </script>
+</body>
+</html>
+
